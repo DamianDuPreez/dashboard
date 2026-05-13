@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Brand accent variables — updated at runtime by ThemeProvider */
+    --brand-500: #0f172a;
+    --brand-600: #020617;
+
+    /* App is always light-mode; these are kept for any Shadcn components */
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 222 84% 5%;
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    border-color: #e2e8f0;
+  }
+  body {
+    background-color: #f9fafb;
+    color: #0f172a;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* Custom scrollbar — subtle, matches light theme */
+@layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 999px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #cbd5e1;
+  }
+}
