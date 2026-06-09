@@ -27,12 +27,13 @@ export interface Wallet {
   cardNumber: string;
   type: 'debit' | 'credit';
   brand: 'visa' | 'mastercard';
+  isFrozen?: boolean;
 }
 
 const INITIAL_WALLETS: Wallet[] = [
-  { id: 'w1', name: 'Primary Account', balance: 124500.00, cardNumber: '**** 4242', type: 'debit', brand: 'visa' },
-  { id: 'w2', name: 'Savings Vault', balance: 450000.00, cardNumber: '**** 8891', type: 'debit', brand: 'mastercard' },
-  { id: 'w3', name: 'Business Credit', balance: -4500.00, cardNumber: '**** 1123', type: 'credit', brand: 'visa' },
+  { id: 'w1', name: 'Primary Account', balance: 124500.00, cardNumber: '**** 4242', type: 'debit', brand: 'visa', isFrozen: false },
+  { id: 'w2', name: 'Savings Vault', balance: 450000.00, cardNumber: '**** 8891', type: 'debit', brand: 'mastercard', isFrozen: false },
+  { id: 'w3', name: 'Business Credit', balance: -4500.00, cardNumber: '**** 1123', type: 'credit', brand: 'visa', isFrozen: false },
 ];
 
 const INITIAL_TRANSACTIONS: Transaction[] = [
@@ -80,10 +81,12 @@ interface WalletContextType {
   activeWalletId: string;
   setActiveWalletId: (id: string) => void;
   activeWallet: Wallet | undefined;
+  transactions: Transaction[];
   activeTransactions: Transaction[];
   activeRevenue: RevenuePoint[];
   isLoading: boolean;
   executeTransfer: (sourceId: string, destId: string, amount: number) => void;
+  toggleWalletFreeze: (walletId: string) => void;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -166,6 +169,12 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
     });
   };
 
+  const toggleWalletFreeze = (walletId: string) => {
+    setWallets(prev => prev.map(w => 
+      w.id === walletId ? { ...w, isFrozen: !w.isFrozen } : w
+    ));
+  };
+
   const activeWallet = useMemo(() => wallets.find(w => w.id === activeWalletId), [wallets, activeWalletId]);
   
   const activeTransactions = useMemo(() => 
@@ -182,10 +191,12 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
       activeWalletId,
       setActiveWalletId,
       activeWallet,
+      transactions,
       activeTransactions,
       activeRevenue,
       isLoading,
-      executeTransfer
+      executeTransfer,
+      toggleWalletFreeze,
     }}>
       {children}
     </WalletContext.Provider>

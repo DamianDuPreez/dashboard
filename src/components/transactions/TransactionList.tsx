@@ -99,7 +99,7 @@ export function TransactionList() {
 // ─────────────────────────────────────────────────────────────
 // TransactionRow — always-light colours, accent tints from theme
 // ─────────────────────────────────────────────────────────────
-function TransactionRow({ transaction: tx, isExpanded, onToggle }: {
+export function TransactionRow({ transaction: tx, isExpanded, onToggle }: {
   transaction: Transaction;
   isExpanded: boolean;
   onToggle: () => void;

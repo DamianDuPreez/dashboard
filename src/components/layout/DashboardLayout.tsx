@@ -7,6 +7,8 @@ import { useTheme } from '@/context/ThemeContext';
 import { TransferModal } from '../modals/TransferModal';
 import { ComingSoonPage } from '../pages/ComingSoonPage';
 import { SettingsPage } from '../pages/SettingsPage';
+import { TransactionsPage } from '../pages/TransactionsPage';
+import { WalletsPage } from '../pages/WalletsPage';
 
 const PAGE_TRANSITION = {
   initial:    { opacity: 0, y: 12 },
@@ -21,8 +23,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [activePage, setActivePage] = useState<AppPage>('overview');
 
   const renderPageContent = () => {
-    if (activePage === 'overview')  return children;
-    if (activePage === 'settings')  return <SettingsPage />;
+    if (activePage === 'overview')     return children;
+    if (activePage === 'transactions') return <TransactionsPage />;
+    if (activePage === 'wallets')      return <WalletsPage />;
+    if (activePage === 'settings')     return <SettingsPage />;
     return <ComingSoonPage page={activePage} />;
   };
 

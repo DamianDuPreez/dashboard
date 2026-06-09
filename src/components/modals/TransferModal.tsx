@@ -16,16 +16,30 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
   const { wallets, activeWalletId, executeTransfer } = useWallet();
   const { addNotification } = useNotification();
   const [amount, setAmount] = useState('');
+  const [sourceWalletId, setSourceWalletId] = useState('');
   const [targetWalletId, setTargetWalletId] = useState('');
   const [transferState, setTransferState] = useState<'idle' | 'processing' | 'success'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    if (isOpen) { setTransferState('idle'); setAmount(''); setTargetWalletId(''); setErrorMsg(''); }
-  }, [isOpen]);
+    if (isOpen) { 
+      setTransferState('idle'); 
+      setAmount(''); 
+      setTargetWalletId(''); 
+      setErrorMsg(''); 
+      
+      const activeW = wallets.find(w => w.id === activeWalletId);
+      if (activeW && !activeW.isFrozen) {
+        setSourceWalletId(activeWalletId);
+      } else {
+        const firstUnfrozen = wallets.find(w => !w.isFrozen);
+        setSourceWalletId(firstUnfrozen ? firstUnfrozen.id : '');
+      }
+    }
+  }, [isOpen, activeWalletId, wallets]);
 
   const handleTransfer = () => {
-    if (!amount || !targetWalletId) return;
+    if (!amount || !targetWalletId || !sourceWalletId) return;
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) {
       setErrorMsg('Please enter a valid amount.');
@@ -42,10 +56,10 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
     setTimeout(() => {
       setTransferState('success');
       
-      const sourceWallet = wallets.find(w => w.id === activeWalletId);
+      const sourceWallet = wallets.find(w => w.id === sourceWalletId);
       const destWallet = wallets.find(w => w.id === targetWalletId);
       
-      executeTransfer(activeWalletId, targetWalletId, numAmount);
+      executeTransfer(sourceWalletId, targetWalletId, numAmount);
 
       addNotification({
         icon: '💸',
@@ -124,12 +138,15 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                     <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">From</label>
                     <select
                       disabled={transferState === 'processing'}
-                      defaultValue={activeWalletId}
+                      value={sourceWalletId}
+                      onChange={(e) => setSourceWalletId(e.target.value)}
                       className={cn(inputClass, 'disabled:opacity-60')}
                       style={{ '--tw-ring-color': palette.primary } as React.CSSProperties}
                     >
                       {wallets.map(w => (
-                        <option key={w.id} value={w.id}>{w.name} (···{w.cardNumber.slice(-4)})</option>
+                        <option key={w.id} value={w.id} disabled={w.isFrozen}>
+                          {w.name} (···{w.cardNumber.slice(-4)}) {w.isFrozen ? '(Frozen)' : ''}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -152,8 +169,10 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                       style={{ '--tw-ring-color': palette.primary } as React.CSSProperties}
                     >
                       <option value="">Select recipient wallet…</option>
-                      {wallets.filter(w => w.id !== activeWalletId).map(w => (
-                        <option key={`to-${w.id}`} value={w.id}>{w.name}</option>
+                      {wallets.filter(w => w.id !== sourceWalletId).map(w => (
+                        <option key={`to-${w.id}`} value={w.id} disabled={w.isFrozen}>
+                          {w.name} {w.isFrozen ? '(Frozen)' : ''}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -179,7 +198,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                   </div>
 
                   <button
-                    disabled={!amount || !targetWalletId || transferState === 'processing'}
+                    disabled={!amount || !targetWalletId || !sourceWalletId || transferState === 'processing'}
                     onClick={handleTransfer}
                     className="w-full mt-2 py-3 rounded-xl font-semibold text-white text-sm shadow-sm transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     style={{ backgroundColor: palette.primary }}
