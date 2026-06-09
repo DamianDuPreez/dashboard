@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useMemo, type ReactNode, type FC } from 'react';
+import { createContext, useContext, useState, useMemo, useEffect, type ReactNode, type FC } from 'react';
 import { Monitor, Coffee, Car, ArrowRightLeft, Plane } from 'lucide-react';
 
 export type TransactionStatus = 'Completed' | 'Pending' | 'Declined';
@@ -12,6 +12,7 @@ export interface Transaction {
   amount: number;
   status: TransactionStatus;
   icon: React.ElementType;
+  iconName: string;
   walletName?: string;
 }
 
@@ -39,18 +40,18 @@ const INITIAL_WALLETS: Wallet[] = [
 
 const INITIAL_TRANSACTIONS: Transaction[] = [
   // Primary Account (w1)
-  { id: 't1', walletId: 'w1', date: new Date(2026, 4, 11, 14, 30), merchant: 'Apple Store', category: 'Electronics', amount: -2499.00, status: 'Completed', icon: Monitor },
-  { id: 't2', walletId: 'w1', date: new Date(2026, 4, 11, 9, 15), merchant: 'Starbucks', category: 'Food & Dining', amount: -6.50, status: 'Completed', icon: Coffee },
-  { id: 't3', walletId: 'w1', date: new Date(2026, 4, 10, 18, 45), merchant: 'Uber', category: 'Transportation', amount: -24.00, status: 'Completed', icon: Car },
-  { id: 't4', walletId: 'w1', date: new Date(2026, 4, 10, 12, 0), merchant: 'Client Payment', category: 'Income', amount: 4500.00, status: 'Pending', icon: ArrowRightLeft },
+  { id: 't1', walletId: 'w1', date: new Date(2026, 4, 11, 14, 30), merchant: 'Apple Store', category: 'Electronics', amount: -2499.00, status: 'Completed', icon: Monitor, iconName: 'Monitor' },
+  { id: 't2', walletId: 'w1', date: new Date(2026, 4, 11, 9, 15), merchant: 'Starbucks', category: 'Food & Dining', amount: -6.50, status: 'Completed', icon: Coffee, iconName: 'Coffee' },
+  { id: 't3', walletId: 'w1', date: new Date(2026, 4, 10, 18, 45), merchant: 'Uber', category: 'Transportation', amount: -24.00, status: 'Completed', icon: Car, iconName: 'Car' },
+  { id: 't4', walletId: 'w1', date: new Date(2026, 4, 10, 12, 0), merchant: 'Client Payment', category: 'Income', amount: 4500.00, status: 'Pending', icon: ArrowRightLeft, iconName: 'ArrowRightLeft' },
   // Savings Vault (w2)
-  { id: 't5', walletId: 'w2', date: new Date(2026, 4, 9, 10, 0), merchant: 'Interest Yield', category: 'Income', amount: 350.00, status: 'Completed', icon: ArrowRightLeft },
-  { id: 't6', walletId: 'w2', date: new Date(2026, 4, 1, 9, 0), merchant: 'Auto Deposit', category: 'Transfer', amount: 5000.00, status: 'Completed', icon: ArrowRightLeft },
+  { id: 't5', walletId: 'w2', date: new Date(2026, 4, 9, 10, 0), merchant: 'Interest Yield', category: 'Income', amount: 350.00, status: 'Completed', icon: ArrowRightLeft, iconName: 'ArrowRightLeft' },
+  { id: 't6', walletId: 'w2', date: new Date(2026, 4, 1, 9, 0), merchant: 'Auto Deposit', category: 'Transfer', amount: 5000.00, status: 'Completed', icon: ArrowRightLeft, iconName: 'ArrowRightLeft' },
   // Business Credit (w3)
-  { id: 't7', walletId: 'w3', date: new Date(2026, 4, 9, 20, 10), merchant: 'AWS Services', category: 'Software', amount: -1234.90, status: 'Completed', icon: Monitor },
-  { id: 't8', walletId: 'w3', date: new Date(2026, 4, 9, 15, 30), merchant: 'Delta Airlines', category: 'Travel', amount: -850.00, status: 'Declined', icon: Plane },
-  { id: 't9', walletId: 'w3', date: new Date(2026, 4, 8, 8, 0), merchant: 'Google Workspace', category: 'Software', amount: -89.45, status: 'Completed', icon: Monitor },
-  { id: 't10', walletId: 'w3', date: new Date(2026, 4, 7, 19, 20), merchant: 'WeWork', category: 'Real Estate', amount: -1500.00, status: 'Completed', icon: Monitor },
+  { id: 't7', walletId: 'w3', date: new Date(2026, 4, 9, 20, 10), merchant: 'AWS Services', category: 'Software', amount: -1234.90, status: 'Completed', icon: Monitor, iconName: 'Monitor' },
+  { id: 't8', walletId: 'w3', date: new Date(2026, 4, 9, 15, 30), merchant: 'Delta Airlines', category: 'Travel', amount: -850.00, status: 'Declined', icon: Plane, iconName: 'Plane' },
+  { id: 't9', walletId: 'w3', date: new Date(2026, 4, 8, 8, 0), merchant: 'Google Workspace', category: 'Software', amount: -89.45, status: 'Completed', icon: Monitor, iconName: 'Monitor' },
+  { id: 't10', walletId: 'w3', date: new Date(2026, 4, 7, 19, 20), merchant: 'WeWork', category: 'Real Estate', amount: -1500.00, status: 'Completed', icon: Monitor, iconName: 'Monitor' },
 ];
 
 const INITIAL_REVENUE: RevenuePoint[] = [
@@ -94,13 +95,54 @@ interface WalletContextType {
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
+const ICONS_MAP: Record<string, React.ElementType> = {
+  Monitor, Coffee, Car, ArrowRightLeft, Plane
+};
+
 export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
-  const [wallets, setWallets]           = useState<Wallet[]>(INITIAL_WALLETS);
-  const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
-  const [revenues, setRevenues]         = useState<RevenuePoint[]>(INITIAL_REVENUE);
+  const [wallets, setWallets] = useState<Wallet[]>(() => {
+    const saved = localStorage.getItem('brand_os_wallets');
+    return saved ? JSON.parse(saved) : INITIAL_WALLETS;
+  });
+  
+  const [transactions, setTransactions] = useState<Transaction[]>(() => {
+    const saved = localStorage.getItem('brand_os_transactions');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return parsed.map((t: any) => ({
+          ...t,
+          date: new Date(t.date),
+          icon: ICONS_MAP[t.iconName] || ArrowRightLeft
+        }));
+      } catch (e) {
+        return INITIAL_TRANSACTIONS;
+      }
+    }
+    return INITIAL_TRANSACTIONS;
+  });
+  
+  const [revenues, setRevenues] = useState<RevenuePoint[]>(() => {
+    const saved = localStorage.getItem('brand_os_revenues');
+    return saved ? JSON.parse(saved) : INITIAL_REVENUE;
+  });
 
   const [activeWalletId, setActiveWalletIdState] = useState<string>(INITIAL_WALLETS[0].id);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('brand_os_wallets', JSON.stringify(wallets));
+  }, [wallets]);
+
+  useEffect(() => {
+    localStorage.setItem('brand_os_transactions', JSON.stringify(
+      transactions.map(t => ({ ...t, icon: undefined })) // Don't serialize the component
+    ));
+  }, [transactions]);
+
+  useEffect(() => {
+    localStorage.setItem('brand_os_revenues', JSON.stringify(revenues));
+  }, [revenues]);
 
   const setActiveWalletId = (id: string) => {
     if (id === activeWalletId) return;
@@ -136,6 +178,7 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
       amount: -amount,
       status: 'Completed',
       icon: ArrowRightLeft,
+      iconName: 'ArrowRightLeft',
     };
 
     const destTx: Transaction = {
@@ -147,6 +190,7 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
       amount: amount, // Positive amount reduces the negative debt balance
       status: 'Completed',
       icon: ArrowRightLeft,
+      iconName: 'ArrowRightLeft',
     };
 
     setTransactions(prev => [sourceTx, destTx, ...prev]);

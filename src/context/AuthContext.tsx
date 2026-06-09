@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode, type FC } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode, type FC } from 'react';
 
 export const AVATAR_PRESETS = [
   { id: 'violet',  bg: '#7c3aed', label: 'Violet'  },
@@ -27,10 +27,34 @@ const DEMO_EMAIL = 'demo@branding.os';
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
-  const [isLoggedIn,   setIsLoggedIn]   = useState(false);
-  const [displayName,  setDisplayName]  = useState(DEMO_NAME);
-  const [email,        setEmail]        = useState(DEMO_EMAIL);
-  const [avatarColor,  setAvatarColor]  = useState(AVATAR_PRESETS[0].bg);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    const saved = localStorage.getItem('brand_os_auth');
+    return saved ? JSON.parse(saved).isLoggedIn : false;
+  });
+  
+  const [displayName, setDisplayName] = useState(() => {
+    const saved = localStorage.getItem('brand_os_auth');
+    return saved ? JSON.parse(saved).displayName : DEMO_NAME;
+  });
+  
+  const [email, setEmail] = useState(() => {
+    const saved = localStorage.getItem('brand_os_auth');
+    return saved ? JSON.parse(saved).email : DEMO_EMAIL;
+  });
+  
+  const [avatarColor, setAvatarColor] = useState(() => {
+    const saved = localStorage.getItem('brand_os_auth');
+    return saved ? JSON.parse(saved).avatarColor : AVATAR_PRESETS[0].bg;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('brand_os_auth', JSON.stringify({
+      isLoggedIn,
+      displayName,
+      email,
+      avatarColor
+    }));
+  }, [isLoggedIn, displayName, email, avatarColor]);
 
   const login = (name: string, mail: string) => {
     setDisplayName(name || DEMO_NAME);
@@ -38,7 +62,10 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
     setIsLoggedIn(true);
   };
 
-  const logout = () => setIsLoggedIn(false);
+  const logout = () => {
+    setIsLoggedIn(false);
+    localStorage.removeItem('brand_os_auth');
+  };
 
   const updateProfile = (name: string, mail: string, color: string) => {
     setDisplayName(name || DEMO_NAME);
