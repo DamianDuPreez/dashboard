@@ -14,13 +14,27 @@ import { useTheme } from './context/ThemeContext';
 import { cn } from '@/lib/utils';
 
 function DashboardContent() {
-  const { wallets, activeWalletId, setActiveWalletId } = useWallet();
+  const { wallets, activeWalletId, setActiveWalletId, activeRevenue } = useWallet();
   const { palette } = useTheme();
   const carouselRef = useRef<HTMLDivElement>(null);
 
   const activeWallet = wallets.find(w => w.id === activeWalletId);
-  const growthRate = activeWalletId === 'w1' ? '+12.5%' : activeWalletId === 'w2' ? '+4.2%' : '-2.1%';
-  const isGrowthPositive = growthRate.startsWith('+');
+  
+  let growthRateStr = '+0.0%';
+  let isGrowthPositive = true;
+  if (activeRevenue && activeRevenue.length >= 2) {
+    const latest = activeRevenue[activeRevenue.length - 1].revenue;
+    const previous = activeRevenue[activeRevenue.length - 2].revenue;
+    if (previous === 0) {
+      if (latest > 0) growthRateStr = '+100.0%';
+      else if (latest < 0) { growthRateStr = '-100.0%'; isGrowthPositive = false; }
+    } else {
+      const diff = latest - previous;
+      const rate = (diff / Math.abs(previous)) * 100;
+      isGrowthPositive = rate >= 0;
+      growthRateStr = `${isGrowthPositive ? '+' : ''}${rate.toFixed(1)}%`;
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto">
@@ -59,7 +73,7 @@ function DashboardContent() {
             <div className="p-5 rounded-xl bg-slate-50 border border-slate-100">
               <p className="text-xs font-medium text-slate-500 mb-1">Total Balance</p>
               <p className="text-3xl font-bold tracking-tight text-slate-900">
-                ${Math.abs(activeWallet?.balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                {(activeWallet?.balance || 0) < 0 ? '-' : ''}${Math.abs(activeWallet?.balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </p>
             </div>
 
@@ -69,7 +83,7 @@ function DashboardContent() {
                 'text-3xl font-bold tracking-tight',
                 isGrowthPositive ? 'text-emerald-600' : 'text-rose-600'
               )}>
-                {growthRate}
+                {growthRateStr}
               </p>
             </div>
 
@@ -78,7 +92,7 @@ function DashboardContent() {
               <div>
                 <p className="text-xs font-medium text-slate-500">Active Theme</p>
                 <p className="text-sm font-semibold text-slate-800 capitalize" style={{ color: palette.primary }}>
-                  {activeWallet?.type === 'credit' ? 'Business' : activeWallet?.name}
+                  {activeWallet?.name}
                 </p>
               </div>
             </div>
