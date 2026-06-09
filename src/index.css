@@ -23,6 +23,7 @@
     box-sizing: border-box;
     border-color: #e2e8f0;
   }
+
   body {
     background-color: #f9fafb;
     color: #0f172a;
@@ -36,13 +37,16 @@
   .custom-scrollbar::-webkit-scrollbar {
     width: 4px;
   }
+
   .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
   }
+
   .custom-scrollbar::-webkit-scrollbar-thumb {
     background: #e2e8f0;
     border-radius: 999px;
   }
+
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #cbd5e1;
   }
