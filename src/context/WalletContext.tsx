@@ -181,7 +181,7 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const addWallet = (name: string, type: 'debit' | 'credit', brand: 'visa' | 'mastercard', initialBalance: number) => {
     const newId = `w-${Math.random().toString(36).substring(2, 9)}`;
     const randomCardEnd = Math.floor(1000 + Math.random() * 9000).toString();
-    const processedBalance = type === 'credit' ? 0 : Math.abs(initialBalance);
+    const processedBalance = type === 'credit' ? -Math.abs(initialBalance) : Math.abs(initialBalance);
     
     const newWallet: Wallet = {
       id: newId,
