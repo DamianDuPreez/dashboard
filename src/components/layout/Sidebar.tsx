@@ -145,7 +145,7 @@ function NavItem({
       {active && (
         <motion.div
           layoutId="active-nav-indicator"
-          className="absolute left-0 top-1/2 -translate-y-[58%] w-[3px] h-[16px] rounded-r-full"
+          className="absolute left-0 top-0 bottom-0 my-auto w-[3px] h-[18px] rounded-r-full"
           style={{ backgroundColor: accentColor }}
           transition={{ type: 'spring', stiffness: 500, damping: 35 }}
         />
