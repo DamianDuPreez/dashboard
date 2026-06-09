@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
 import { useWallet } from '@/context/WalletContext';
+import { useNotification } from '@/context/NotificationContext';
 import { cn } from '@/lib/utils';
 import { X, ArrowRight, Loader2, Check } from 'lucide-react';
 
@@ -13,18 +14,32 @@ interface TransferModalProps {
 export function TransferModal({ isOpen, onClose }: TransferModalProps) {
   const { palette } = useTheme();
   const { wallets, activeWalletId } = useWallet();
+  const { addNotification } = useNotification();
   const [amount, setAmount] = useState('');
+  const [targetWalletId, setTargetWalletId] = useState('');
   const [transferState, setTransferState] = useState<'idle' | 'processing' | 'success'>('idle');
 
   useEffect(() => {
-    if (isOpen) { setTransferState('idle'); setAmount(''); }
+    if (isOpen) { setTransferState('idle'); setAmount(''); setTargetWalletId(''); }
   }, [isOpen]);
 
   const handleTransfer = () => {
-    if (!amount) return;
+    if (!amount || !targetWalletId) return;
     setTransferState('processing');
+    
     setTimeout(() => {
       setTransferState('success');
+      
+      const sourceWallet = wallets.find(w => w.id === activeWalletId);
+      const destWallet = wallets.find(w => w.id === targetWalletId);
+      
+      addNotification({
+        icon: '💸',
+        title: 'Transfer Complete',
+        body: `Your $${amount} transfer to ${destWallet?.name || 'Wallet'} is done.`,
+        details: `Transfer ID: TRX-${Math.random().toString(36).substring(2, 8).toUpperCase()}\nFrom: ${sourceWallet?.name}\nTo: ${destWallet?.name}\nAmount: $${amount}\nStatus: Completed`,
+      });
+
       setTimeout(onClose, 1000);
     }, 1500);
   };
@@ -117,6 +132,8 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                     <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">To</label>
                     <select
                       disabled={transferState === 'processing'}
+                      value={targetWalletId}
+                      onChange={(e) => setTargetWalletId(e.target.value)}
                       className={cn(inputClass, 'disabled:opacity-60')}
                       style={{ '--tw-ring-color': palette.primary } as React.CSSProperties}
                     >
@@ -145,7 +162,7 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                   </div>
 
                   <button
-                    disabled={!amount || transferState === 'processing'}
+                    disabled={!amount || !targetWalletId || transferState === 'processing'}
                     onClick={handleTransfer}
                     className="w-full mt-2 py-3 rounded-xl font-semibold text-white text-sm shadow-sm transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     style={{ backgroundColor: palette.primary }}

@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ThemeProvider } from './context/ThemeContext';
 import { WalletProvider, useWallet } from './context/WalletContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { NotificationProvider } from './context/NotificationContext';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { GlassCard } from './components/ui/GlassCard';
 import { RevenueChart } from './components/charts/RevenueChart';
@@ -133,7 +134,9 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <AppInner />
+        <NotificationProvider>
+          <AppInner />
+        </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>
   );

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, RotateCcw } from 'lucide-react';
 import { useAuth, AVATAR_PRESETS, DEMO_NAME, DEMO_EMAIL } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
+import { useNotification } from '@/context/NotificationContext';
 import { AvatarIcon } from '@/components/ui/AvatarIcon';
 import { cn } from '@/lib/utils';
 
@@ -14,6 +15,7 @@ interface ProfileModalProps {
 export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
   const { palette }                                         = useTheme();
   const { displayName, email, avatarColor, updateProfile }  = useAuth();
+  const { addNotification }                                 = useNotification();
 
   const [nameInput,  setNameInput]  = useState(displayName);
   const [emailInput, setEmailInput] = useState(email);
@@ -29,7 +31,16 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
   };
 
   const handleSave = () => {
-    updateProfile(nameInput.trim() || DEMO_NAME, emailInput.trim() || DEMO_EMAIL, colorInput);
+    const newName = nameInput.trim() || DEMO_NAME;
+    updateProfile(newName, emailInput.trim() || DEMO_EMAIL, colorInput);
+    
+    addNotification({
+      icon: '👤',
+      title: 'Profile Updated',
+      body: 'Your profile details have been saved.',
+      details: `Display Name: ${newName}\nEmail: ${emailInput.trim() || DEMO_EMAIL}\nAvatar Color Updated.`,
+    });
+
     setSaved(true);
     setTimeout(() => { setSaved(false); onClose(); }, 900);
   };

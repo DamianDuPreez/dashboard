@@ -1,30 +1,28 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Search, LogOut, User, Settings, ChevronDown } from 'lucide-react';
+import { Bell, Search, LogOut, User, Settings, ChevronDown, Trash2 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
+import { useNotification } from '@/context/NotificationContext';
 import { AvatarIcon } from '@/components/ui/AvatarIcon';
 import { ProfileModal } from '@/components/modals/ProfileModal';
 import { cn } from '@/lib/utils';
 
 type TopBarProps = { onNavigate: (page: string) => void };
 
-const mockNotifications = [
-  { id: 1, icon: '💸', title: 'Transfer Complete',  body: 'Your $500 transfer to Savings Vault is done.',     time: '2m ago',  unread: true  },
-  { id: 2, icon: '📈', title: 'Portfolio Up 4.2%',  body: 'Your Savings Vault grew by $350 this week.',       time: '1h ago',  unread: true  },
-  { id: 3, icon: '⚠️', title: 'Unusual Activity',   body: 'A large charge was declined on Business Credit.', time: '3h ago',  unread: false },
-];
-
 export function TopBar({ onNavigate }: TopBarProps) {
   const { palette }                                        = useTheme();
   const { displayName, email, avatarColor, logout }        = useAuth();
+  const { notifications, markAsRead, markAllAsRead, deleteNotification } = useNotification();
 
   const [notifOpen,    setNotifOpen]    = useState(false);
   const [profileOpen,  setProfileOpen]  = useState(false);
   const [profileModal, setProfileModal] = useState(false);
-  const [unreadCount,  setUnreadCount]  = useState(mockNotifications.filter(n => n.unread).length);
+  const [expandedId,   setExpandedId]   = useState<string | null>(null);
 
-  const handleNotifOpen   = () => { setNotifOpen(v => !v); setProfileOpen(false); setUnreadCount(0); };
+  const unreadCount = notifications.filter(n => n.unread).length;
+
+  const handleNotifOpen   = () => { setNotifOpen(v => !v); setProfileOpen(false); setExpandedId(null); };
   const handleProfileOpen = () => { setProfileOpen(v => !v); setNotifOpen(false); };
   const handleLogout      = () => { logout(); setProfileOpen(false); };
 
@@ -75,27 +73,81 @@ export function TopBar({ onNavigate }: TopBarProps) {
                   <div className="px-4 py-3 border-b border-slate-100">
                     <p className="text-xs font-bold tracking-widest uppercase text-slate-400">Notifications</p>
                   </div>
-                  {mockNotifications.map(n => (
-                    <div
-                      key={n.id}
-                      className={cn(
-                        'flex items-start gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-50 transition-colors',
-                        n.unread && 'bg-slate-50/80'
-                      )}
-                    >
-                      <span className="text-lg mt-0.5 shrink-0">{n.icon}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between gap-2">
-                          <p className="text-sm font-semibold text-slate-800">{n.title}</p>
-                          <span className="text-[10px] text-slate-400 shrink-0 mt-0.5">{n.time}</span>
-                        </div>
-                        <p className="text-xs text-slate-500 mt-0.5 leading-snug">{n.body}</p>
-                      </div>
-                    </div>
-                  ))}
-                  <div className="px-4 py-2.5 text-center">
-                    <button className="text-xs font-semibold" style={{ color: palette.primary }}>View all</button>
+                  <div className="max-h-[65vh] overflow-y-auto custom-scrollbar">
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-8 text-center text-sm text-slate-500">No notifications</div>
+                    ) : (
+                      <AnimatePresence>
+                        {notifications.map(n => {
+                          const isExpanded = expandedId === n.id;
+                          return (
+                            <motion.div
+                              key={n.id}
+                              layout
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className={cn(
+                                'flex items-start gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-50 transition-colors overflow-hidden',
+                                n.unread && 'bg-slate-50/80'
+                              )}
+                              onClick={() => {
+                                markAsRead(n.id);
+                                setExpandedId(isExpanded ? null : n.id);
+                              }}
+                            >
+                              <span className="text-lg mt-0.5 shrink-0">{n.icon}</span>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex justify-between gap-2">
+                                  <p className="text-sm font-semibold text-slate-800">{n.title}</p>
+                                  <span className="text-[10px] text-slate-400 shrink-0 mt-0.5">
+                                    {n.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                </div>
+                                <p className={cn("text-xs text-slate-500 mt-0.5 leading-snug", !isExpanded && "truncate")}>{n.body}</p>
+                                
+                                <AnimatePresence>
+                                  {isExpanded && n.details && (
+                                    <motion.div
+                                      initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                                      animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
+                                      exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                                      className="overflow-hidden"
+                                    >
+                                      <div className="p-3 bg-slate-100/50 rounded-lg text-[11px] text-slate-600 font-medium leading-relaxed whitespace-pre-wrap">
+                                        {n.details}
+                                      </div>
+                                      <div className="mt-3 flex justify-end">
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            deleteNotification(n.id);
+                                          }}
+                                          className="flex items-center gap-1.5 px-2 py-1.5 text-xs font-semibold text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                                        >
+                                          <Trash2 size={13} /> Delete
+                                        </button>
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                      </AnimatePresence>
+                    )}
                   </div>
+                  {notifications.length > 0 && (
+                    <div className="px-4 py-2.5 border-t border-slate-100 flex justify-center">
+                      <button 
+                        onClick={markAllAsRead}
+                        className="text-[11px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        Mark all as read
+                      </button>
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
