@@ -99,7 +99,7 @@ function WalletCard({ wallet }: { wallet: Wallet }) {
           <div>
             <p className="text-white/60 text-xs font-semibold tracking-widest uppercase mb-1">{wallet.name}</p>
             <p className="text-white text-2xl font-bold tracking-tight">
-              ${Math.abs(wallet.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              {wallet.balance < 0 ? '-' : ''}${Math.abs(wallet.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </p>
           </div>
           <div className="text-white/80">
