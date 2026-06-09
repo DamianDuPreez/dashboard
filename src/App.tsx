@@ -1,4 +1,3 @@
-import { useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ThemeProvider } from './context/ThemeContext';
 import { WalletProvider, useWallet } from './context/WalletContext';
@@ -16,7 +15,6 @@ import { cn } from '@/lib/utils';
 function DashboardContent() {
   const { wallets, activeWalletId, setActiveWalletId, activeRevenue } = useWallet();
   const { palette } = useTheme();
-  const carouselRef = useRef<HTMLDivElement>(null);
 
   const activeWallet = wallets.find(w => w.id === activeWalletId);
   
@@ -39,12 +37,8 @@ function DashboardContent() {
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto">
       {/* Wallet Carousel */}
-      <div className="w-full overflow-hidden" ref={carouselRef}>
-        <motion.div
-          drag="x"
-          dragConstraints={carouselRef}
-          className="flex gap-4 pb-2 cursor-grab active:cursor-grabbing select-none"
-        >
+      <div className="w-full overflow-x-auto pb-4 snap-x">
+        <div className="flex gap-4 min-w-max">
           {wallets.map(wallet => (
             <VirtualCard
               key={wallet.id}
@@ -53,7 +47,7 @@ function DashboardContent() {
               onClick={() => setActiveWalletId(wallet.id)}
             />
           ))}
-        </motion.div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
