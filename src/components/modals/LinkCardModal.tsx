@@ -143,11 +143,6 @@ export function LinkCardModal({ isOpen, onClose }: LinkCardModalProps) {
                     style={{ '--tw-ring-color': palette.primary } as React.CSSProperties}
                   />
                 </div>
-                {type === 'credit' && (
-                  <p className="mt-1.5 text-[10px] font-semibold text-slate-400">
-                    * Credit balance will be stored as negative debt.
-                  </p>
-                )}
               </div>
 
               <button

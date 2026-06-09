@@ -37,6 +37,7 @@ export function RevenueChart() {
           tickLine={false}
           axisLine={false}
           tickFormatter={(v) => `$${v.toLocaleString()}`}
+          width={80}
         />
         <Tooltip
           contentStyle={{
