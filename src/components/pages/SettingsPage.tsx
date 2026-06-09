@@ -88,34 +88,27 @@ export function SettingsPage() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.06 }}
-        className="rounded-2xl p-6 bg-white border border-slate-200 shadow-sm"
+        className="rounded-2xl p-6 bg-white border border-slate-200 shadow-sm flex items-center justify-between"
       >
-        <h2 className="text-sm font-bold text-slate-900 mb-4">Profile</h2>
-        <div className="flex items-center gap-4">
-          <div
-            className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold shadow-sm shrink-0"
-            style={{ backgroundColor: palette.primary }}
-          >
-            {displayName.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <p className="font-semibold text-slate-900">{displayName}</p>
-            <p className="text-sm text-slate-500">{email}</p>
+        <div>
+          <h2 className="text-sm font-bold text-slate-900 mb-4">Profile</h2>
+          <div className="flex items-center gap-4">
+            <div
+              className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold shadow-sm shrink-0"
+              style={{ backgroundColor: palette.primary }}
+            >
+              {displayName.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <p className="font-semibold text-slate-900">{displayName}</p>
+              <p className="text-sm text-slate-500">{email}</p>
+            </div>
           </div>
         </div>
-      </motion.section>
 
-      {/* ── Danger Zone ── */}
-      <motion.section
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.12 }}
-        className="rounded-2xl p-6 border border-rose-200 bg-rose-50/50"
-      >
-        <h2 className="text-sm font-bold text-rose-600 mb-3">Danger Zone</h2>
         <button
           onClick={logout}
-          className="px-4 py-2 rounded-xl border border-rose-300 text-rose-600 text-sm font-medium hover:bg-rose-100 transition-colors"
+          className="px-4 py-2 mt-8 rounded-xl border border-rose-300 text-rose-600 text-sm font-medium hover:bg-rose-50 transition-colors"
         >
           Sign Out
         </button>
