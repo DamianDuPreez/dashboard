@@ -13,18 +13,30 @@ interface TransferModalProps {
 
 export function TransferModal({ isOpen, onClose }: TransferModalProps) {
   const { palette } = useTheme();
-  const { wallets, activeWalletId } = useWallet();
+  const { wallets, activeWalletId, executeTransfer } = useWallet();
   const { addNotification } = useNotification();
   const [amount, setAmount] = useState('');
   const [targetWalletId, setTargetWalletId] = useState('');
   const [transferState, setTransferState] = useState<'idle' | 'processing' | 'success'>('idle');
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    if (isOpen) { setTransferState('idle'); setAmount(''); setTargetWalletId(''); }
+    if (isOpen) { setTransferState('idle'); setAmount(''); setTargetWalletId(''); setErrorMsg(''); }
   }, [isOpen]);
 
   const handleTransfer = () => {
     if (!amount || !targetWalletId) return;
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      setErrorMsg('Please enter a valid amount.');
+      return;
+    }
+    if (numAmount > 1000) {
+      setErrorMsg('Demo limits restrict transfers to $1,000 maximum.');
+      return;
+    }
+
+    setErrorMsg('');
     setTransferState('processing');
     
     setTimeout(() => {
@@ -33,11 +45,13 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
       const sourceWallet = wallets.find(w => w.id === activeWalletId);
       const destWallet = wallets.find(w => w.id === targetWalletId);
       
+      executeTransfer(activeWalletId, targetWalletId, numAmount);
+
       addNotification({
         icon: '💸',
         title: 'Transfer Complete',
-        body: `Your $${amount} transfer to ${destWallet?.name || 'Wallet'} is done.`,
-        details: `Transfer ID: TRX-${Math.random().toString(36).substring(2, 8).toUpperCase()}\nFrom: ${sourceWallet?.name}\nTo: ${destWallet?.name}\nAmount: $${amount}\nStatus: Completed`,
+        body: `Your $${numAmount.toFixed(2)} transfer to ${destWallet?.name || 'Wallet'} is done.`,
+        details: `Transfer ID: TRX-${Math.random().toString(36).substring(2, 8).toUpperCase()}\nFrom: ${sourceWallet?.name}\nTo: ${destWallet?.name}\nAmount: $${numAmount.toFixed(2)}\nStatus: Completed`,
       });
 
       setTimeout(onClose, 1000);
@@ -153,12 +167,15 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
                         type="number"
                         disabled={transferState === 'processing'}
                         value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
+                        onChange={(e) => { setAmount(e.target.value); setErrorMsg(''); }}
                         placeholder="0.00"
                         className={cn(inputClass, 'pl-8 text-lg font-bold disabled:opacity-60')}
                         style={{ '--tw-ring-color': palette.primary } as React.CSSProperties}
                       />
                     </div>
+                    {errorMsg && (
+                      <p className="mt-2 text-xs font-semibold text-rose-500">{errorMsg}</p>
+                    )}
                   </div>
 
                   <button

@@ -32,14 +32,23 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
 
   const handleSave = () => {
     const newName = nameInput.trim() || DEMO_NAME;
-    updateProfile(newName, emailInput.trim() || DEMO_EMAIL, colorInput);
+    const newEmail = emailInput.trim() || DEMO_EMAIL;
     
-    addNotification({
-      icon: '👤',
-      title: 'Profile Updated',
-      body: 'Your profile details have been saved.',
-      details: `Display Name: ${newName}\nEmail: ${emailInput.trim() || DEMO_EMAIL}\nAvatar Color Updated.`,
-    });
+    const changes: string[] = [];
+    if (newName !== displayName) changes.push(`Display Name: ${newName}`);
+    if (newEmail !== email) changes.push(`Email: ${newEmail}`);
+    if (colorInput !== avatarColor) changes.push(`Avatar Color Updated`);
+
+    updateProfile(newName, newEmail, colorInput);
+    
+    if (changes.length > 0) {
+      addNotification({
+        icon: '👤',
+        title: 'Profile Updated',
+        body: 'Your profile details have been saved.',
+        details: changes.join('\n'),
+      });
+    }
 
     setSaved(true);
     setTimeout(() => { setSaved(false); onClose(); }, 900);

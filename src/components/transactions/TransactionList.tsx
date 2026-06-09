@@ -73,14 +73,16 @@ export function TransactionList() {
             ))
           ) : (
             <>
-              {filteredTransactions.map(tx => (
-                <TransactionRow
-                  key={tx.id}
-                  transaction={tx}
-                  isExpanded={expandedId === tx.id}
-                  onToggle={() => handleToggle(tx.id)}
-                />
-              ))}
+              <AnimatePresence initial={false}>
+                {filteredTransactions.map(tx => (
+                  <TransactionRow
+                    key={tx.id}
+                    transaction={tx}
+                    isExpanded={expandedId === tx.id}
+                    onToggle={() => handleToggle(tx.id)}
+                  />
+                ))}
+              </AnimatePresence>
               {filteredTransactions.length === 0 && (
                 <div className="flex items-center justify-center h-32 text-slate-400 text-sm">
                   No transactions found.
@@ -151,12 +153,20 @@ function TransactionRow({ transaction: tx, isExpanded, onToggle }: {
   return (
     <motion.div
       layout
+      initial={{ opacity: 0, y: -20, height: 0 }}
+      animate={{ opacity: 1, y: 0, height: 'auto' }}
+      exit={{ opacity: 0, scale: 0.95, height: 0 }}
       onClick={onToggle}
       className={cn(
         'rounded-2xl border cursor-pointer overflow-hidden transition-all',
         isExpanded ? 'border-slate-200 shadow-md bg-slate-50/80' : 'border-slate-100 bg-white hover:bg-slate-50/60 hover:border-slate-200'
       )}
-      transition={{ layout: { duration: 0.35, ease: [0.4, 0, 0.2, 1] } }}
+      transition={{ 
+        layout: { duration: 0.35, ease: [0.4, 0, 0.2, 1] },
+        opacity: { duration: 0.25 },
+        y: { type: 'spring', stiffness: 400, damping: 25 },
+        height: { duration: 0.3 }
+      }}
     >
       {/* ── Summary row ── */}
       <div className="flex items-center justify-between p-4">

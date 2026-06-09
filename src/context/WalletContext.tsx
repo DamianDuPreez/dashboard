@@ -29,13 +29,13 @@ export interface Wallet {
   brand: 'visa' | 'mastercard';
 }
 
-const mockWallets: Wallet[] = [
+const INITIAL_WALLETS: Wallet[] = [
   { id: 'w1', name: 'Primary Account', balance: 124500.00, cardNumber: '**** 4242', type: 'debit', brand: 'visa' },
   { id: 'w2', name: 'Savings Vault', balance: 450000.00, cardNumber: '**** 8891', type: 'debit', brand: 'mastercard' },
   { id: 'w3', name: 'Business Credit', balance: -4500.00, cardNumber: '**** 1123', type: 'credit', brand: 'visa' },
 ];
 
-const mockTransactions: Transaction[] = [
+const INITIAL_TRANSACTIONS: Transaction[] = [
   // Primary Account (w1)
   { id: 't1', walletId: 'w1', date: new Date(2026, 4, 11, 14, 30), merchant: 'Apple Store', category: 'Electronics', amount: -2499.00, status: 'Completed', icon: Monitor },
   { id: 't2', walletId: 'w1', date: new Date(2026, 4, 11, 9, 15), merchant: 'Starbucks', category: 'Food & Dining', amount: -6.50, status: 'Completed', icon: Coffee },
@@ -51,7 +51,7 @@ const mockTransactions: Transaction[] = [
   { id: 't10', walletId: 'w3', date: new Date(2026, 4, 7, 19, 20), merchant: 'WeWork', category: 'Real Estate', amount: -1500.00, status: 'Completed', icon: Monitor },
 ];
 
-const mockRevenue: RevenuePoint[] = [
+const INITIAL_REVENUE: RevenuePoint[] = [
   // Primary Account (w1)
   { walletId: 'w1', name: 'Jan', revenue: 4000 },
   { walletId: 'w1', name: 'Feb', revenue: 3000 },
@@ -83,12 +83,17 @@ interface WalletContextType {
   activeTransactions: Transaction[];
   activeRevenue: RevenuePoint[];
   isLoading: boolean;
+  executeTransfer: (sourceId: string, destId: string, amount: number) => void;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
-  const [activeWalletId, setActiveWalletIdState] = useState<string>(mockWallets[0].id);
+  const [wallets, setWallets]           = useState<Wallet[]>(INITIAL_WALLETS);
+  const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
+  const [revenues, setRevenues]         = useState<RevenuePoint[]>(INITIAL_REVENUE);
+
+  const [activeWalletId, setActiveWalletIdState] = useState<string>(INITIAL_WALLETS[0].id);
   const [isLoading, setIsLoading] = useState(false);
 
   const setActiveWalletId = (id: string) => {
@@ -100,25 +105,87 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
     }, 800);
   };
 
-  const activeWallet = useMemo(() => mockWallets.find(w => w.id === activeWalletId), [activeWalletId]);
+  const executeTransfer = (sourceId: string, destId: string, amount: number) => {
+    const sourceWallet = wallets.find(w => w.id === sourceId);
+    const destWallet = wallets.find(w => w.id === destId);
+    if (!sourceWallet || !destWallet) return;
+
+    // 1. Update balances
+    setWallets(prev => prev.map(w => {
+      if (w.id === sourceId) return { ...w, balance: w.balance - amount };
+      if (w.id === destId)   return { ...w, balance: w.balance + amount };
+      return w;
+    }));
+
+    // 2. Inject transactions
+    const txIdBase = Math.random().toString(36).substring(2, 9);
+    const now = new Date();
+    
+    const sourceTx: Transaction = {
+      id: `tx-out-${txIdBase}`,
+      walletId: sourceId,
+      date: now,
+      merchant: destWallet.type === 'credit' ? `${destWallet.name} Payment` : destWallet.name,
+      category: destWallet.type === 'credit' ? 'Payment' : 'Transfer',
+      amount: -amount,
+      status: 'Completed',
+      icon: ArrowRightLeft,
+    };
+
+    const destTx: Transaction = {
+      id: `tx-in-${txIdBase}`,
+      walletId: destId,
+      date: now,
+      merchant: destWallet.type === 'credit' ? 'Payment Received' : sourceWallet.name,
+      category: destWallet.type === 'credit' ? 'Payment' : 'Transfer',
+      amount: amount, // Positive amount reduces the negative debt balance
+      status: 'Completed',
+      icon: ArrowRightLeft,
+    };
+
+    setTransactions(prev => [sourceTx, destTx, ...prev]);
+
+    // 3. Update chart revenues
+    setRevenues(prev => {
+      const next = [...prev];
+      // Update June for source
+      for (let i = next.length - 1; i >= 0; i--) {
+        if (next[i].walletId === sourceId) {
+          next[i] = { ...next[i], revenue: next[i].revenue - amount };
+          break;
+        }
+      }
+      // Update June for dest
+      for (let i = next.length - 1; i >= 0; i--) {
+        if (next[i].walletId === destId) {
+          next[i] = { ...next[i], revenue: next[i].revenue + amount };
+          break;
+        }
+      }
+      return next;
+    });
+  };
+
+  const activeWallet = useMemo(() => wallets.find(w => w.id === activeWalletId), [wallets, activeWalletId]);
   
   const activeTransactions = useMemo(() => 
-    mockTransactions.filter(t => t.walletId === activeWalletId).sort((a, b) => b.date.getTime() - a.date.getTime()), 
-  [activeWalletId]);
+    transactions.filter(t => t.walletId === activeWalletId).sort((a, b) => b.date.getTime() - a.date.getTime()), 
+  [transactions, activeWalletId]);
 
   const activeRevenue = useMemo(() => 
-    mockRevenue.filter(r => r.walletId === activeWalletId), 
-  [activeWalletId]);
+    revenues.filter(r => r.walletId === activeWalletId), 
+  [revenues, activeWalletId]);
 
   return (
     <WalletContext.Provider value={{
-      wallets: mockWallets,
+      wallets,
       activeWalletId,
       setActiveWalletId,
       activeWallet,
       activeTransactions,
       activeRevenue,
-      isLoading
+      isLoading,
+      executeTransfer
     }}>
       {children}
     </WalletContext.Provider>
