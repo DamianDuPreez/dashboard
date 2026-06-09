@@ -3,14 +3,19 @@ import { useTheme } from '@/context/ThemeContext';
 import { useWallet } from '@/context/WalletContext';
 import type { Wallet } from '@/context/WalletContext';
 import { cn } from '@/lib/utils';
-import { Lock, Unlock, CreditCard } from 'lucide-react';
+import { Lock, Unlock, CreditCard, Plus, Trash2 } from 'lucide-react';
+import { LinkCardModal } from '@/components/modals/LinkCardModal';
+import { useState } from 'react';
 
 export function WalletsPage() {
   const { palette } = useTheme();
-  const { wallets, toggleWalletFreeze } = useWallet();
+  const { wallets, toggleWalletFreeze, deleteWallet } = useWallet();
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
 
   return (
     <div className="flex flex-col h-full w-full max-w-5xl mx-auto">
+      <LinkCardModal isOpen={isLinkModalOpen} onClose={() => setIsLinkModalOpen(false)} />
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900 mb-2 tracking-tight">Your Wallets</h1>
         <p className="text-sm text-slate-500">Manage your connected accounts and cards.</p>
@@ -28,35 +33,69 @@ export function WalletsPage() {
             >
               <WalletCard wallet={wallet} />
               
-              {/* Freeze Toggle Row */}
+              {/* Controls Row */}
               <div className="flex items-center justify-between px-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
-                  {wallet.isFrozen ? (
-                    <Lock size={16} className="text-rose-500" />
-                  ) : (
-                    <Unlock size={16} className="text-emerald-500" />
-                  )}
-                  <span>{wallet.isFrozen ? 'Card Frozen' : 'Card Active'}</span>
-                </div>
-                
-                <button
-                  onClick={() => toggleWalletFreeze(wallet.id)}
-                  className={cn(
-                    "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2",
-                    wallet.isFrozen ? "bg-rose-500 focus:ring-rose-500" : "bg-slate-200 focus:ring-slate-400"
-                  )}
-                  style={!wallet.isFrozen ? { backgroundColor: palette.primary } : undefined}
-                >
-                  <span
+                {/* Freeze Toggle */}
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => toggleWalletFreeze(wallet.id)}
                     className={cn(
-                      "inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm",
-                      wallet.isFrozen ? "translate-x-6" : "translate-x-1"
+                      "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2",
+                      wallet.isFrozen ? "bg-rose-500 focus:ring-rose-500" : "bg-slate-200 focus:ring-slate-400"
                     )}
-                  />
-                </button>
+                    style={!wallet.isFrozen ? { backgroundColor: palette.primary } : undefined}
+                  >
+                    <span
+                      className={cn(
+                        "inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm",
+                        wallet.isFrozen ? "translate-x-6" : "translate-x-1"
+                      )}
+                    />
+                  </button>
+                  <div className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
+                    {wallet.isFrozen ? (
+                      <Lock size={14} className="text-rose-500" />
+                    ) : (
+                      <Unlock size={14} className="text-emerald-500" />
+                    )}
+                    <span className="text-xs uppercase tracking-widest">{wallet.isFrozen ? 'Frozen' : 'Active'}</span>
+                  </div>
+                </div>
+
+                {/* Delete Button */}
+                {wallet.id !== 'w1' && (
+                  <button
+                    onClick={() => deleteWallet(wallet.id)}
+                    className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                    title="Remove Card"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </div>
             </motion.div>
           ))}
+
+          {/* Link New Card Slot */}
+          <motion.div
+            key="link-new"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: wallets.length * 0.1, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+          >
+            <button
+              onClick={() => setIsLinkModalOpen(true)}
+              className="w-full h-56 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition-colors flex flex-col items-center justify-center gap-4 group"
+            >
+              <div 
+                className="w-12 h-12 rounded-full flex items-center justify-center text-white transition-transform group-hover:scale-110 shadow-sm"
+                style={{ backgroundColor: palette.primary }}
+              >
+                <Plus size={24} strokeWidth={2.5} />
+              </div>
+              <span className="text-sm font-bold text-slate-500 uppercase tracking-widest group-hover:text-slate-600">Link New Card</span>
+            </button>
+          </motion.div>
         </AnimatePresence>
       </div>
     </div>
@@ -92,7 +131,7 @@ function WalletCard({ wallet }: { wallet: Wallet }) {
       >
         {/* Glassmorphic Sheen Overlay */}
         <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none" />
-        <div className="absolute -inset-x-[100%] top-0 h-[200%] w-[50%] bg-gradient-to-r from-transparent via-white/10 to-transparent -rotate-45 translate-x-[300%] group-hover:translate-x-[-100%] transition-transform duration-1000 pointer-events-none" />
+        <div className="absolute -inset-x-[200%] -top-[100%] h-[300%] w-[150%] bg-gradient-to-r from-transparent via-white/10 to-transparent -rotate-45 translate-x-[200%] group-hover:translate-x-[-100%] transition-transform duration-1000 pointer-events-none" />
 
         {/* Top row */}
         <div className="flex justify-between items-start relative z-10">

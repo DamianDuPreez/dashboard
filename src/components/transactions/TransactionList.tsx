@@ -112,9 +112,9 @@ export function TransactionRow({ transaction: tx, isExpanded, onToggle }: {
   const accentRgb        = hexToRgb(palette.primary);
 
   const ownerWallet  = wallets.find(w => w.id === tx.walletId);
-  const paymentMethod = ownerWallet
-    ? `${ownerWallet.brand.charAt(0).toUpperCase() + ownerWallet.brand.slice(1)} ${ownerWallet.cardNumber}`
-    : 'Unknown';
+  const paymentMethodNode = ownerWallet
+    ? <span className="text-slate-800">{ownerWallet.brand.charAt(0).toUpperCase() + ownerWallet.brand.slice(1)} {ownerWallet.cardNumber}</span>
+    : <span className="text-slate-400 italic">{tx.walletName || 'Unknown (Archived)'}</span>;
 
   const txId    = `TXN-${tx.id.toUpperCase().padStart(8, '0')}`;
   const location = MERCHANT_LOCATIONS[tx.merchant] ?? 'Location unavailable';
@@ -265,7 +265,7 @@ export function TransactionRow({ transaction: tx, isExpanded, onToggle }: {
                   <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase text-slate-400">
                     <CreditCard size={9} /> Payment Method
                   </div>
-                  <p className="text-xs font-semibold text-slate-800">{paymentMethod}</p>
+                  <p className="text-xs font-semibold">{paymentMethodNode}</p>
                 </div>
               </motion.div>
             </div>

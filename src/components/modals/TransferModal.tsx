@@ -45,8 +45,8 @@ export function TransferModal({ isOpen, onClose }: TransferModalProps) {
       setErrorMsg('Please enter a valid amount.');
       return;
     }
-    if (numAmount > 1000) {
-      setErrorMsg('Demo limits restrict transfers to $1,000 maximum.');
+    if (numAmount > 50000) {
+      setErrorMsg('Demo limits restrict transfers to $50,000 maximum.');
       return;
     }
 

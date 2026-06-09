@@ -7,7 +7,6 @@ import { TransactionRow } from '@/components/transactions/TransactionList';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/Skeleton';
 
-const FILTERS = ['All Accounts', 'Primary Account', 'Savings Vault', 'Business Credit'];
 
 export function TransactionsPage() {
   const { palette } = useTheme();
@@ -15,6 +14,9 @@ export function TransactionsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('All Accounts');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // Derive dynamic filters from current global wallets
+  const dynamicFilters = useMemo(() => ['All Accounts', ...wallets.map(w => w.name)], [wallets]);
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
@@ -40,6 +42,10 @@ export function TransactionsPage() {
 
   const handleToggle = (id: string) => setExpandedId(prev => prev === id ? null : id);
 
+  // Compute summary stats
+  const totalCount = filteredTransactions.length;
+  const computedSum = filteredTransactions.reduce((acc, t) => acc + t.amount, 0);
+
   return (
     <div className="flex flex-col h-full w-full max-w-5xl mx-auto">
       <div className="mb-8">
@@ -50,7 +56,7 @@ export function TransactionsPage() {
           
           {/* Pills */}
           <div className="flex flex-wrap gap-2">
-            {FILTERS.map(filter => (
+            {dynamicFilters.map(filter => (
               <button
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
@@ -79,6 +85,23 @@ export function TransactionsPage() {
               style={{ '--tw-ring-color': palette.primary } as React.CSSProperties}
             />
           </div>
+        </div>
+      </div>
+
+      {/* Summary Stats Row */}
+      <div className="flex justify-between items-center bg-white border border-slate-100 rounded-2xl p-4 mb-4 shadow-sm">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Matched Records:</span>
+          <span className="text-sm font-bold text-slate-700">{totalCount}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Net Sum:</span>
+          <span className={cn(
+            "text-sm font-bold",
+            computedSum > 0 ? "text-emerald-500" : computedSum < 0 ? "text-rose-500" : "text-slate-700"
+          )}>
+            {computedSum > 0 ? '+' : ''}{computedSum < 0 ? '-' : ''}${Math.abs(computedSum).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+          </span>
         </div>
       </div>
 

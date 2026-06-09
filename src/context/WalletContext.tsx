@@ -12,6 +12,7 @@ export interface Transaction {
   amount: number;
   status: TransactionStatus;
   icon: React.ElementType;
+  walletName?: string;
 }
 
 export interface RevenuePoint {
@@ -87,6 +88,8 @@ interface WalletContextType {
   isLoading: boolean;
   executeTransfer: (sourceId: string, destId: string, amount: number) => void;
   toggleWalletFreeze: (walletId: string) => void;
+  addWallet: (name: string, type: 'debit' | 'credit', brand: 'visa' | 'mastercard', initialBalance: number) => void;
+  deleteWallet: (walletId: string) => void;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -175,6 +178,54 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
     ));
   };
 
+  const addWallet = (name: string, type: 'debit' | 'credit', brand: 'visa' | 'mastercard', initialBalance: number) => {
+    const newId = `w-${Math.random().toString(36).substring(2, 9)}`;
+    const randomCardEnd = Math.floor(1000 + Math.random() * 9000).toString();
+    const processedBalance = type === 'credit' ? 0 : Math.abs(initialBalance);
+    
+    const newWallet: Wallet = {
+      id: newId,
+      name,
+      type,
+      brand,
+      balance: processedBalance,
+      cardNumber: `**** ${randomCardEnd}`,
+      isFrozen: false,
+    };
+    
+    setWallets(prev => [...prev, newWallet]);
+
+    // Mock chart initialization
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+    const mockPoints: RevenuePoint[] = months.map(m => ({
+      name: m,
+      revenue: processedBalance,
+      walletId: newId,
+    }));
+    setRevenues(prev => [...prev, ...mockPoints]);
+  };
+
+  const deleteWallet = (walletId: string) => {
+    if (walletId === 'w1') return; // Safety guard: Cannot delete primary account
+    
+    const walletToDelete = wallets.find(w => w.id === walletId);
+    if (!walletToDelete) return;
+
+    setWallets(prev => prev.filter(w => w.id !== walletId));
+    setRevenues(prev => prev.filter(r => r.walletId !== walletId));
+    
+    setTransactions(prev => prev.map(t => {
+      if (t.walletId === walletId) {
+        return { ...t, walletName: `${walletToDelete.name} (Archived)` };
+      }
+      return t;
+    }));
+    
+    if (activeWalletId === walletId) {
+      setActiveWalletId('w1');
+    }
+  };
+
   const activeWallet = useMemo(() => wallets.find(w => w.id === activeWalletId), [wallets, activeWalletId]);
   
   const activeTransactions = useMemo(() => 
@@ -197,6 +248,8 @@ export const WalletProvider: FC<{ children: ReactNode }> = ({ children }) => {
       isLoading,
       executeTransfer,
       toggleWalletFreeze,
+      addWallet,
+      deleteWallet,
     }}>
       {children}
     </WalletContext.Provider>
