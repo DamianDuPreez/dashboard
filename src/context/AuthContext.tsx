@@ -16,7 +16,7 @@ interface AuthContextType {
   displayName: string;
   email: string;
   avatarColor: string;
-  login: (name: string, email: string) => void;
+  login: (name: string, email: string, staySignedIn?: boolean) => void;
   logout: () => void;
   updateProfile: (name: string, email: string, avatarColor: string) => void;
 }
@@ -27,36 +27,46 @@ const DEMO_EMAIL = 'demo@branding.os';
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
+  const [storageArea, setStorageArea] = useState<Storage | null>(() => {
+    if (localStorage.getItem('dashboard_auth') === 'true') return localStorage;
+    if (sessionStorage.getItem('dashboard_auth') === 'true') return sessionStorage;
+    return null;
+  });
+
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    const saved = localStorage.getItem('brand_os_auth');
-    return saved ? JSON.parse(saved).isLoggedIn : false;
+    return localStorage.getItem('dashboard_auth') === 'true' || sessionStorage.getItem('dashboard_auth') === 'true';
   });
   
   const [displayName, setDisplayName] = useState(() => {
-    const saved = localStorage.getItem('brand_os_auth');
+    const saved = localStorage.getItem('brand_os_auth') || sessionStorage.getItem('brand_os_auth');
     return saved ? JSON.parse(saved).displayName : DEMO_NAME;
   });
   
   const [email, setEmail] = useState(() => {
-    const saved = localStorage.getItem('brand_os_auth');
+    const saved = localStorage.getItem('brand_os_auth') || sessionStorage.getItem('brand_os_auth');
     return saved ? JSON.parse(saved).email : DEMO_EMAIL;
   });
   
   const [avatarColor, setAvatarColor] = useState(() => {
-    const saved = localStorage.getItem('brand_os_auth');
+    const saved = localStorage.getItem('brand_os_auth') || sessionStorage.getItem('brand_os_auth');
     return saved ? JSON.parse(saved).avatarColor : AVATAR_PRESETS[0].bg;
   });
 
   useEffect(() => {
-    localStorage.setItem('brand_os_auth', JSON.stringify({
-      isLoggedIn,
-      displayName,
-      email,
-      avatarColor
-    }));
-  }, [isLoggedIn, displayName, email, avatarColor]);
+    if (storageArea && isLoggedIn) {
+      storageArea.setItem('brand_os_auth', JSON.stringify({
+        isLoggedIn,
+        displayName,
+        email,
+        avatarColor
+      }));
+    }
+  }, [isLoggedIn, displayName, email, avatarColor, storageArea]);
 
-  const login = (name: string, mail: string) => {
+  const login = (name: string, mail: string, staySignedIn: boolean = true) => {
+    const targetStorage = staySignedIn ? localStorage : sessionStorage;
+    targetStorage.setItem('dashboard_auth', 'true');
+    setStorageArea(targetStorage);
     setDisplayName(name || DEMO_NAME);
     setEmail(mail || DEMO_EMAIL);
     setIsLoggedIn(true);
@@ -64,7 +74,11 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
   const logout = () => {
     setIsLoggedIn(false);
+    setStorageArea(null);
+    localStorage.removeItem('dashboard_auth');
+    sessionStorage.removeItem('dashboard_auth');
     localStorage.removeItem('brand_os_auth');
+    sessionStorage.removeItem('brand_os_auth');
   };
 
   const updateProfile = (name: string, mail: string, color: string) => {

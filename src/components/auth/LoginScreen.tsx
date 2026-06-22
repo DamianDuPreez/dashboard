@@ -9,13 +9,14 @@ export function LoginScreen() {
   const { palette }  = useTheme();
   const [name, setName]   = useState(DEMO_NAME);
   const [email, setEmail] = useState(DEMO_EMAIL);
+  const [staySignedIn, setStaySignedIn] = useState(true);
   const [phase, setPhase] = useState<'form' | 'welcome'>('form');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
     setPhase('welcome');
-    setTimeout(() => login(name.trim(), email.trim()), 1600);
+    setTimeout(() => login(name.trim(), email.trim(), staySignedIn), 1600);
   };
 
   return (
@@ -98,6 +99,21 @@ export function LoginScreen() {
                     <RotateCcw size={15} />
                   </button>
                 </div>
+              </div>
+
+              {/* Stay Signed In */}
+              <div className="flex items-center gap-2 mt-1">
+                <input
+                  type="checkbox"
+                  id="staySignedIn"
+                  checked={staySignedIn}
+                  onChange={(e) => setStaySignedIn(e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 transition-colors cursor-pointer"
+                  style={{ accentColor: palette.primary }}
+                />
+                <label htmlFor="staySignedIn" className="text-sm font-medium text-slate-600 cursor-pointer select-none">
+                  Stay Signed In
+                </label>
               </div>
 
               {/* Submit */}
