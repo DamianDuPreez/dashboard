@@ -7,7 +7,18 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Geist', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['"Instrument Serif"', 'ui-serif', 'Georgia', 'serif'],
+        mono: ['"Geist Mono"', 'ui-monospace', 'monospace'],
+      },
       colors: {
+        canvas: '#F4F2EE',
+        ink: {
+          DEFAULT: '#14151A',
+          soft: '#2A2C33',
+        },
+        line: '#E7E4DD',
         brand: {
           500: "var(--brand-500)",
           600: "var(--brand-600)",

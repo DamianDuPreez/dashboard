@@ -25,10 +25,23 @@
   }
 
   body {
-    background-color: #f9fafb;
-    color: #0f172a;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    background-color: #f4f2ee;
+    color: #14151a;
+    font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
     -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer utilities {
+  /* Aligned digits so balances and amounts line up in columns */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Fine grain overlay used on the dark statement panel and cards */
+  .grain {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
   }
 }
 

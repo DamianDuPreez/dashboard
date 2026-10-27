@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { useTheme } from '@/context/ThemeContext';
 import { useWallet } from '@/context/WalletContext';
 import type { Transaction, TransactionStatus } from '@/context/WalletContext';
-import { cn, hexToRgb } from '@/lib/utils';
+import { cn, formatMoney, hexToRgb } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/Skeleton';
 
 const MERCHANT_LOCATIONS: Record<string, string> = {
@@ -39,8 +39,11 @@ export function TransactionList() {
 
   return (
     <div className="flex flex-col h-full w-full">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-[11px] font-bold tracking-widest uppercase text-slate-400">Recent Transactions</h2>
+      <div className="flex justify-between items-center gap-3 mb-5">
+        <div>
+          <h2 className="text-[15px] font-semibold tracking-tight text-ink">Recent activity</h2>
+          <p className="text-[12px] text-stone-500 mt-0.5">Tap a payment for details</p>
+        </div>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
           <input
@@ -48,13 +51,13 @@ export function TransactionList() {
             placeholder="Search..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 pr-4 py-2 rounded-xl text-sm border border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all"
+            className="w-40 sm:w-56 pl-9 pr-4 py-2 rounded-full text-[13px] border border-line bg-canvas text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all"
           />
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
           {isLoading ? (
             Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="flex items-center justify-between p-4 rounded-xl border border-slate-100">
@@ -108,7 +111,7 @@ export function TransactionRow({ transaction: tx, isExpanded, onToggle }: {
   const { wallets }  = useWallet();
 
   const isPositive       = tx.amount > 0;
-  const formattedAmount  = `${isPositive ? '+' : '-'}$${Math.abs(tx.amount).toFixed(2)}`;
+  const formattedAmount  = formatMoney(tx.amount, true);
   const accentRgb        = hexToRgb(palette.primary);
 
   const ownerWallet  = wallets.find(w => w.id === tx.walletId);
@@ -159,7 +162,7 @@ export function TransactionRow({ transaction: tx, isExpanded, onToggle }: {
       onClick={onToggle}
       className={cn(
         'rounded-2xl border cursor-pointer overflow-hidden transition-all',
-        isExpanded ? 'border-slate-200 shadow-md bg-slate-50/80' : 'border-slate-100 bg-white hover:bg-slate-50/60 hover:border-slate-200'
+        isExpanded ? 'border-line shadow-md bg-canvas/60' : 'border-transparent bg-white hover:bg-canvas/70'
       )}
       transition={{ 
         layout: { duration: 0.35, ease: [0.4, 0, 0.2, 1] },
@@ -196,7 +199,7 @@ export function TransactionRow({ transaction: tx, isExpanded, onToggle }: {
               {tx.status}
             </div>
             <div className={cn(
-              'font-bold text-right text-sm min-w-[72px]',
+              'font-semibold text-right text-sm min-w-[84px] tabular',
               isPositive ? 'text-emerald-600' : 'text-slate-800'
             )}>
               {formattedAmount}

@@ -3,7 +3,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Sidebar, MobileBottomNav } from './Sidebar';
 import type { AppPage } from './Sidebar';
 import { TopBar } from './TopBar';
-import { useTheme } from '@/context/ThemeContext';
 import { TransferModal } from '../modals/TransferModal';
 import { ComingSoonPage } from '../pages/ComingSoonPage';
 import { SettingsPage } from '../pages/SettingsPage';
@@ -17,13 +16,23 @@ const PAGE_TRANSITION = {
   transition: { duration: 0.22, ease: [0.4, 0, 0.2, 1] as const },
 };
 
-export function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { palette } = useTheme();
+/** Actions the overview page can trigger on the surrounding shell */
+export interface DashboardActions {
+  openTransfer: () => void;
+  navigate: (page: AppPage) => void;
+}
+
+export function DashboardLayout({ children }: { children: (actions: DashboardActions) => React.ReactNode }) {
   const [isTransferOpen, setIsTransferOpen] = useState(false);
   const [activePage, setActivePage] = useState<AppPage>('overview');
 
+  const actions: DashboardActions = {
+    openTransfer: () => setIsTransferOpen(true),
+    navigate: setActivePage,
+  };
+
   const renderPageContent = () => {
-    if (activePage === 'overview')     return children;
+    if (activePage === 'overview')     return children(actions);
     if (activePage === 'transactions') return <TransactionsPage />;
     if (activePage === 'wallets')      return <WalletsPage />;
     if (activePage === 'settings')     return <SettingsPage />;
@@ -31,29 +40,19 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="relative flex h-screen w-full overflow-hidden bg-[#F9FAFB]">
+    <div className="relative flex h-screen w-full overflow-hidden bg-canvas">
       <TransferModal isOpen={isTransferOpen} onClose={() => setIsTransferOpen(false)} />
-
-      {/* Subtle static accent glow — replaces the heavy animated mesh */}
-      <div
-        className="pointer-events-none absolute top-0 right-0 w-[600px] h-[400px] rounded-full blur-[160px] opacity-[0.06] -translate-y-1/3 translate-x-1/3 transition-colors duration-1000"
-        style={{ backgroundColor: palette.primary }}
-      />
-      <div
-        className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[400px] rounded-full blur-[140px] opacity-[0.05] translate-y-1/3 -translate-x-1/3 transition-colors duration-1000"
-        style={{ backgroundColor: palette.secondary }}
-      />
 
       <Sidebar
         activePage={activePage}
         onNavigate={setActivePage}
-        onOpenTransfer={() => setIsTransferOpen(true)}
+        onOpenTransfer={actions.openTransfer}
       />
 
       <div className="flex-1 flex flex-col z-10 relative h-full min-w-0">
         <TopBar onNavigate={(page) => setActivePage(page as AppPage)} />
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8 custom-scrollbar">
+        <main className="flex-1 overflow-y-auto px-4 md:px-8 pt-2 pb-24 md:pb-10 custom-scrollbar">
           <AnimatePresence mode="wait">
             <motion.div key={activePage} {...PAGE_TRANSITION} className="h-full">
               {renderPageContent()}
@@ -65,7 +64,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <MobileBottomNav
         activePage={activePage}
         onNavigate={setActivePage}
-        onOpenTransfer={() => setIsTransferOpen(true)}
+        onOpenTransfer={actions.openTransfer}
       />
     </div>
   );

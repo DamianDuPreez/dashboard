@@ -1,82 +1,103 @@
 import { motion } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
 import type { Wallet } from '@/context/WalletContext';
-import { cn, hexToRgb } from '@/lib/utils';
-import { CreditCard, Zap } from 'lucide-react';
+import { cn, formatMoney } from '@/lib/utils';
+import { Snowflake, Wifi } from 'lucide-react';
 
 interface VirtualCardProps {
   wallet: Wallet;
-  isActive: boolean;
-  onClick: () => void;
+  isActive?: boolean;
+  onClick?: () => void;
+  className?: string;
 }
 
-export function VirtualCard({ wallet, isActive, onClick }: VirtualCardProps) {
+/**
+ * Physical-style payment card. Debit cards wear the live theme colour,
+ * credit cards are always ink so the two read differently at a glance.
+ */
+export function VirtualCard({ wallet, isActive = true, onClick, className }: VirtualCardProps) {
   const { palette } = useTheme();
 
-  const isPositive = wallet.balance >= 0;
-  const formattedBalance = `${isPositive ? '' : '-'}$${Math.abs(wallet.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
-
-  // Active card: rich coloured background using the theme primary
-  // Inactive card: clean white with a subtle border
-  const accentRgb = hexToRgb(palette.primary);
+  const isCredit = wallet.type === 'credit';
+  const base = isCredit ? '#1B1C22' : palette.primary;
+  const [whole, cents] = formatMoney(wallet.balance).split('.');
 
   return (
     <motion.div
       onClick={onClick}
-      whileHover={{ scale: 1.02, y: -4 }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={onClick ? { y: -3 } : undefined}
+      whileTap={onClick ? { scale: 0.985 } : undefined}
       className={cn(
-        'relative min-w-[300px] h-[180px] rounded-2xl p-5 cursor-pointer overflow-hidden border transition-all duration-300',
-        isActive
-          ? 'shadow-lg'
-          : 'bg-white border-slate-200 shadow-sm opacity-80 hover:opacity-100 hover:shadow-md'
+        'relative w-full aspect-[1.586] rounded-[20px] p-5 overflow-hidden text-white select-none transition-[background,opacity] duration-700',
+        onClick && 'cursor-pointer',
+        !isActive && 'opacity-60',
+        className
       )}
-      style={isActive ? {
-        background: `linear-gradient(135deg, ${palette.primary} 0%, rgba(${accentRgb},0.85) 100%)`,
-        borderColor: palette.primary,
-      } : undefined}
+      style={{
+        background: `radial-gradient(120% 120% at 100% 0%, ${palette.secondary} 0%, transparent 55%), linear-gradient(140deg, ${base} 0%, #0d0e12 120%)`,
+        boxShadow: '0 18px 40px -18px rgba(20,21,26,0.55), inset 0 1px 0 rgba(255,255,255,0.12)',
+      }}
     >
-      {/* Decorative glow on active card only */}
-      {isActive && (
-        <div
-          className="absolute -top-8 -right-8 w-36 h-36 rounded-full blur-[40px] opacity-40 pointer-events-none"
-          style={{ backgroundColor: palette.secondary }}
-        />
-      )}
+      {/* Texture + guilloché rings */}
+      <div className="grain absolute inset-0 opacity-[0.18] mix-blend-overlay pointer-events-none" />
+      <svg className="absolute -right-16 -bottom-24 w-[320px] h-[320px] opacity-[0.14] pointer-events-none" viewBox="0 0 200 200" fill="none">
+        {Array.from({ length: 9 }).map((_, i) => (
+          <circle key={i} cx="100" cy="100" r={20 + i * 10} stroke="white" strokeWidth="0.6" />
+        ))}
+      </svg>
 
       <div className="relative z-10 flex flex-col h-full justify-between">
-        {/* Top row */}
         <div className="flex justify-between items-start">
           <div>
-            <h3 className={cn('font-medium text-sm', isActive ? 'text-white/80' : 'text-slate-500')}>
-              {wallet.name}
-            </h3>
-            <p className={cn('text-2xl font-bold mt-1 tracking-tight', isActive ? 'text-white' : 'text-slate-900')}>
-              {formattedBalance}
+            <p className="text-[12px] font-medium text-white/70">{wallet.name}</p>
+            <p className="font-display text-[34px] leading-none mt-2 tabular">
+              {whole}<span className="text-white/50 text-[22px]">.{cents}</span>
             </p>
           </div>
-          <div
-            className="p-2 rounded-lg"
-            style={isActive
-              ? { backgroundColor: 'rgba(255,255,255,0.15)' }
-              : { backgroundColor: `rgba(${accentRgb},0.1)` }
-            }
-          >
-            <Zap size={18} style={{ color: isActive ? '#fff' : palette.primary }} />
-          </div>
+          {wallet.isFrozen ? (
+            <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider bg-white/15 rounded-full px-2 py-1">
+              <Snowflake size={11} /> Frozen
+            </span>
+          ) : (
+            <Wifi size={20} className="rotate-90 text-white/70" />
+          )}
         </div>
 
-        {/* Bottom row */}
         <div className="flex justify-between items-end">
-          <div className={cn('flex items-center gap-2 text-sm', isActive ? 'text-white/70' : 'text-slate-400')}>
-            <CreditCard size={16} />
-            <span className="font-mono tracking-wider text-xs">{wallet.cardNumber}</span>
+          <div className="flex items-center gap-3">
+            <CardChip />
+            <span className="font-mono text-[13px] tracking-[0.18em] text-white/80">{wallet.cardNumber}</span>
           </div>
-          <span className={cn('text-xs font-bold uppercase tracking-widest', isActive ? 'text-white/60' : 'text-slate-400')}>
-            {wallet.brand}
-          </span>
+          <BrandMark brand={wallet.brand} />
         </div>
       </div>
     </motion.div>
   );
+}
+
+function CardChip() {
+  return (
+    <svg width="34" height="26" viewBox="0 0 34 26" fill="none" aria-hidden>
+      <rect x="0.5" y="0.5" width="33" height="25" rx="5" fill="url(#chip)" stroke="rgba(255,255,255,0.35)" />
+      <path d="M0 9h10m14 0h10M0 17h10m14 0h10M10 0v26m14-26v26M10 9c4 0 4 8 14 8" stroke="rgba(0,0,0,0.25)" strokeWidth="0.8" />
+      <defs>
+        <linearGradient id="chip" x1="0" y1="0" x2="34" y2="26">
+          <stop stopColor="#E9D8A6" />
+          <stop offset="1" stopColor="#B89B5E" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
+function BrandMark({ brand }: { brand: Wallet['brand'] }) {
+  if (brand === 'mastercard') {
+    return (
+      <svg width="40" height="25" viewBox="0 0 40 25" aria-label="Mastercard">
+        <circle cx="14" cy="12.5" r="11" fill="#EB001B" fillOpacity="0.9" />
+        <circle cx="26" cy="12.5" r="11" fill="#F79E1B" fillOpacity="0.9" />
+      </svg>
+    );
+  }
+  return <span className="text-[20px] font-bold italic tracking-tight text-white/90">VISA</span>;
 }

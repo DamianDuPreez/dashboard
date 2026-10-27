@@ -20,7 +20,7 @@ export function LoginScreen() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#F9FAFB] flex items-center justify-center px-4">
+    <div className="min-h-screen w-full bg-canvas flex items-center justify-center px-4">
       <AnimatePresence mode="wait">
         {phase === 'form' ? (
           <motion.div
