@@ -21,20 +21,20 @@ const enter = (i: number) => ({
 
 export function OverviewPage({ openTransfer, navigate }: DashboardActions) {
   return (
-    <div className="max-w-[1240px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-5">
-      <motion.div {...enter(0)} className="lg:col-span-8">
+    <div className="max-w-[1240px] mx-auto grid grid-cols-1 xl:grid-cols-12 gap-4 md:gap-5">
+      <motion.div {...enter(0)} className="xl:col-span-7 2xl:col-span-8">
         <StatementPanel openTransfer={openTransfer} navigate={navigate} />
       </motion.div>
-      <motion.div {...enter(1)} className="lg:col-span-4">
+      <motion.div {...enter(1)} className="xl:col-span-5 2xl:col-span-4">
         <CardsPanel onManage={() => navigate('wallets')} />
       </motion.div>
-      <motion.div {...enter(2)} className="lg:col-span-8">
+      <motion.div {...enter(2)} className="xl:col-span-7 2xl:col-span-8">
         <CashFlowPanel />
       </motion.div>
-      <motion.div {...enter(3)} className="lg:col-span-4">
+      <motion.div {...enter(3)} className="xl:col-span-5 2xl:col-span-4">
         <SpendingPanel />
       </motion.div>
-      <motion.div {...enter(4)} className="lg:col-span-12">
+      <motion.div {...enter(4)} className="xl:col-span-12">
         <GlassCard className="p-5 md:p-6 min-h-[420px]">
           <TransactionList />
         </GlassCard>
@@ -187,49 +187,51 @@ function CardsPanel({ onManage }: { onManage: () => void }) {
         </button>
       </PanelTitle>
 
-      <div className="mt-4">
-        <AnimatePresence mode="wait">
-          {activeWallet && (
-            <motion.div
-              key={activeWallet.id}
-              initial={{ opacity: 0, rotateX: -12, y: 8 }}
-              animate={{ opacity: 1, rotateX: 0, y: 0 }}
-              exit={{ opacity: 0, rotateX: 12, y: -8 }}
-              transition={{ duration: 0.28 }}
-              style={{ transformPerspective: 900 }}
-            >
-              <VirtualCard wallet={activeWallet} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      <div className="md:flex md:items-start md:gap-6 xl:block">
+        <div className="mt-4 md:w-[340px] md:shrink-0 xl:w-auto">
+          <AnimatePresence mode="wait">
+            {activeWallet && (
+              <motion.div
+                key={activeWallet.id}
+                initial={{ opacity: 0, rotateX: -12, y: 8 }}
+                animate={{ opacity: 1, rotateX: 0, y: 0 }}
+                exit={{ opacity: 0, rotateX: 12, y: -8 }}
+                transition={{ duration: 0.28 }}
+                style={{ transformPerspective: 900 }}
+              >
+                <VirtualCard wallet={activeWallet} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
-      <div className="mt-4 flex flex-col gap-1">
-        {wallets.map(w => {
-          const active = w.id === activeWalletId;
-          return (
-            <button
-              key={w.id}
-              onClick={() => setActiveWalletId(w.id)}
-              className={cn(
-                'flex items-center gap-3 rounded-xl px-2.5 py-2 text-left transition-colors',
-                active ? 'bg-canvas' : 'hover:bg-canvas/60'
-              )}
-            >
-              <span
-                className="w-8 h-6 rounded-md shrink-0 border border-black/5"
-                style={{ background: w.type === 'credit' ? '#1B1C22' : palette.primary, opacity: active ? 1 : 0.55 }}
-              />
-              <span className="min-w-0 flex-1">
-                <span className="block text-[13px] font-medium text-ink truncate">{w.name}</span>
-                <span className="block text-[11px] text-stone-500 font-mono">{w.cardNumber}</span>
-              </span>
-              <span className={cn('text-[13px] font-semibold tabular', w.balance < 0 ? 'text-rose-600' : 'text-ink')}>
-                {formatMoney(w.balance)}
-              </span>
-            </button>
-          );
-        })}
+        <div className="mt-4 md:flex-1 xl:flex-none flex flex-col gap-1">
+          {wallets.map(w => {
+            const active = w.id === activeWalletId;
+            return (
+              <button
+                key={w.id}
+                onClick={() => setActiveWalletId(w.id)}
+                className={cn(
+                  'flex items-center gap-3 rounded-xl px-2.5 py-2 text-left transition-colors',
+                  active ? 'bg-canvas' : 'hover:bg-canvas/60'
+                )}
+              >
+                <span
+                  className="w-8 h-6 rounded-md shrink-0 border border-black/5"
+                  style={{ background: w.type === 'credit' ? '#1B1C22' : palette.primary, opacity: active ? 1 : 0.55 }}
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[13px] font-medium text-ink truncate">{w.name}</span>
+                  <span className="block text-[11px] text-stone-500 font-mono">{w.cardNumber}</span>
+                </span>
+                <span className={cn('text-[13px] font-semibold tabular', w.balance < 0 ? 'text-rose-600' : 'text-ink')}>
+                  {formatMoney(w.balance)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </GlassCard>
   );
